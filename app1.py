@@ -1,0 +1,1 @@
+print ("JDC_FRP is running")
