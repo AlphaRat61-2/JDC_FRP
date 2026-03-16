@@ -1,0 +1,4 @@
+month_key,lock_flag,lock_reason
+2025-12,true,Year-end finalized
+2026-01,false,
+2026-02,false,

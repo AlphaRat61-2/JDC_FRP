@@ -1,0 +1,6 @@
+alert_type,threshold
+failure_probability_7d,0.60
+failure_probability_30d,0.50
+deterioration_score,2.5
+chemical_undertreat_ratio,0.6
+chemical_overtreat_ratio,1.5

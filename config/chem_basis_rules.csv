@@ -1,0 +1,6 @@
+chemical_key,default_basis,allowed_basis_override_flag
+CORR_INH_A,WATER,true
+SCALE_INH_A,WATER,true
+DEMULSIFIER_A,TOTAL_FLUID,true
+PARAFFIN_INH_A,OIL,true
+BIOCIDE_A,WATER,true

@@ -1,0 +1,6 @@
+chem_name,chemical_key,normalized_chemical_name,chem_type,dose_basis
+Corrosion Inhibitor A,CORR_INH_A,Corrosion Inhibitor A,corrosion_inhibitor,WATER
+Scale Inhibitor A,SCALE_INH_A,Scale Inhibitor A,scale_inhibitor,WATER
+Demulsifier A,DEMULSIFIER_A,Demulsifier A,demulsifier,TOTAL_FLUID
+Paraffin Inhibitor A,PARAFFIN_INH_A,Paraffin Inhibitor A,paraffin_inhibitor,OIL
+Biocide A,BIOCIDE_A,Biocide A,biocide,WATER

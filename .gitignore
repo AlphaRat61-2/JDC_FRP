@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+JDCvenv_FRPsf/
+venv/
+.venv/
+env/
+
+# Conda / environment files
+.python-version
+
+# Logs and outputs
+logs/
+outputs/
+
+# Local data
+data/
+
+# IDE/editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test/cache
+.pytest_cache/
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/

@@ -1,0 +1,7 @@
+chem_type,low_variance_pct,medium_variance_pct,high_variance_pct
+corrosion_inhibitor,10,20,35
+scale_inhibitor,10,20,35
+demulsifier,15,25,40
+paraffin_inhibitor,15,25,40
+biocide,10,20,35
+default,10,20,35

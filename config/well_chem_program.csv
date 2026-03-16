@@ -1,0 +1,5 @@
+well_id,chemical_key,program_start_date,program_end_date,required_flag,default_target_basis,target_source_preference,actual_source_preference,notes
+1001,CORR_INH_A,2025-01-01,2099-12-31,true,WATER,chemical_rates,chemical_cost,Primary corrosion inhibitor
+1001,SCALE_INH_A,2025-01-01,2099-12-31,true,WATER,chemical_rates,chemical_cost,Primary scale inhibitor
+1002,DEMULSIFIER_A,2025-01-01,2099-12-31,true,TOTAL_FLUID,chemical_rates,chemical_cost,Demulsifier program
+1003,PARAFFIN_INH_A,2025-01-01,2099-12-31,true,OIL,chemical_rates,chemical_cost,Paraffin inhibitor

@@ -1,0 +1,9 @@
+action_id,action_name,pump_multiplier,chem_multiplier,runtime_multiplier,workover_flag
+0,HOLD,1.0,1.0,1.0,false
+1,PUMP_UP_10,1.1,1.0,1.0,false
+2,PUMP_DOWN_10,0.9,1.0,1.0,false
+3,CHEM_UP_20,1.0,1.2,1.0,false
+4,CHEM_DOWN_20,1.0,0.8,1.0,false
+5,RUNTIME_UP_10,1.0,1.0,1.1,false
+6,RUNTIME_DOWN_10,1.0,1.0,0.9,false
+7,WORKOVER,1.0,1.0,1.0,true

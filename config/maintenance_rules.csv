@@ -1,0 +1,8 @@
+failure_cause,condition,recommendation
+Rod Part,fillage_pct<40,Pull rod string
+Pump Failure,fillage_pct<30,Schedule pump replacement
+Tubing Leak,casing_psi>500,Run pressure test
+Scale Blockage,tubing_psi>800,Increase scale inhibitor
+Paraffin Buildup,fluid_temp<120,Increase paraffin inhibitor
+Corrosion,chem_exception_days>5,Increase corrosion inhibitor
+ESP Failure,runtime_hr<6,Inspect motor and cable

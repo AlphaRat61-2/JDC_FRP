@@ -1,0 +1,8 @@
+lift_type,metric_name,low_threshold,high_threshold
+ROD_PUMP,fillage_pct,55,100
+ROD_PUMP,runtime_hr,8,24
+ROD_PUMP,shutdown_count,0,5
+ESP,runtime_hr,8,24
+ESP,trip_count,0,3
+ESP,motor_temp,0,230
+ESP,amps,0,9999
