@@ -51,7 +51,7 @@ from src.reporting.build_rpt_workover import build_rpt_workover
 
 
 def main() -> None:
-    settings = load_settings("config/settings.yaml")
+    settings = load_settings()
     logger = setup_logger(settings)
     batch = create_batch_context(settings, run_type="FULL_PIPELINE", logger=logger)
 

@@ -23,7 +23,7 @@ from src.reporting.build_rpt_run_status import build_rpt_run_status
 
 
 def main() -> None:
-    settings = load_settings("config/settings.yaml")
+    settings = load_settings()
     logger = setup_logger(settings)
     batch = create_batch_context(settings, run_type="ML_PREP", logger=logger)
 

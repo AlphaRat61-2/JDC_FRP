@@ -30,7 +30,7 @@ def build_fact_chem_target_daily(settings, logger, batch) -> pd.DataFrame:
     )
 
     if exceptions:
-        append_exceptions(settings, exceptions, logger)
+        append_exceptions(exceptions)
 
     basis_rules = load_basis_rules()
     if not basis_rules.empty:

@@ -42,13 +42,10 @@ def build_fact_scada_daily(settings, logger, batch) -> pd.DataFrame:
     for idx, row in missing_lift.iterrows():
         exceptions.append(
             make_exception(
-                table_name="stg_scada",
-                record_key=f"{row.get('well_id', '')}|{idx}",
-                exception_category="SCADA",
-                exception_code="MISSING_LIFT_TYPE",
+                module="stg_scada",
+                message=f"SCADA record failed validation: {row.get('whatever_field')}",
+                well_id=row.get("well_id"),
                 severity="WARNING",
-                message="SCADA row could not be assigned a lift type from dim_well.",
-                batch_id=batch.batch_id,
             )
         )
 
@@ -58,13 +55,10 @@ def build_fact_scada_daily(settings, logger, batch) -> pd.DataFrame:
     for idx, row in unmapped_tags.iterrows():
         exceptions.append(
             make_exception(
-                table_name="stg_scada",
-                record_key=f"{row.get('well_id', '')}|{row.get('tag_name', '')}|{idx}",
-                exception_category="SCADA",
-                exception_code="UNMAPPED_SCADA_TAG",
+                module="stg_scada",
+                message=f"SCADA tag not mapped: {row.get('tag_name')}",
+                well_id=row.get("well_id"),
                 severity="WARNING",
-                message=f"SCADA tag not mapped: {row.get('tag_name', '')}",
-                batch_id=batch.batch_id,
             )
         )
 
@@ -87,8 +81,18 @@ def build_fact_scada_daily(settings, logger, batch) -> pd.DataFrame:
         fact["scada_source"] = "scada"
         fact["comm_loss_flag"] = False
 
+    # ------------------------------------------------------------------
+    # Ensure deterioration features exist on the SCADA fact table
+    # so ML and reporting can safely consume them.
+    # ------------------------------------------------------------------
+    if "deterioration_score" not in fact.columns:
+        fact["deterioration_score"] = 0.0
+
+    if "pre_failure_flag" not in fact.columns:
+        fact["pre_failure_flag"] = 0
+
     if exceptions:
-        append_exceptions(settings, exceptions, logger)
+        append_exceptions(exceptions)
 
     write_table(fact, modeled_dir, "fact_scada_daily", settings)
     batch.set_row_count("fact_scada_daily", len(fact))

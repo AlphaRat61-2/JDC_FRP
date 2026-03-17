@@ -53,7 +53,7 @@ def stage_workovers(settings, logger, batch) -> pd.DataFrame:
         )
 
     if missing:
-        append_exceptions(settings, exceptions, logger)
+        append_exceptions(exceptions)
         return pd.DataFrame()
 
     df["well_id"] = df["well_id"].astype(str).str.strip()
@@ -76,7 +76,7 @@ def stage_workovers(settings, logger, batch) -> pd.DataFrame:
     df["cost"] = pd.to_numeric(df["cost"], errors="coerce")
 
     if exceptions:
-        append_exceptions(settings, exceptions, logger)
+        append_exceptions(exceptions)
 
     df["event_date"] = pd.to_datetime(df["event_date"], errors="coerce").dt.date
 

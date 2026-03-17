@@ -6,7 +6,7 @@ import yaml
 # PROJECT ROOT
 # ============================================================
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 # ============================================================
@@ -14,19 +14,16 @@ ROOT = Path(__file__).resolve().parents[2]
 # ============================================================
 
 CONFIG_DIR = ROOT / "config"
-
-LOCAL_SETTINGS_FILE = CONFIG_DIR / "settings_local.yaml"
-TEMPLATE_SETTINGS_FILE = CONFIG_DIR / "settings_template.yaml"
+SETTINGS_FILE = CONFIG_DIR / "settings.yaml"
 
 
 def project_root():
     return ROOT
 
 
-def load_settings():
-    settings_file = (
-        LOCAL_SETTINGS_FILE if LOCAL_SETTINGS_FILE.exists() else TEMPLATE_SETTINGS_FILE
-    )
+def load_settings(path: str | Path | None = None):
+    # If no path is provided, use the single canonical settings.yaml
+    settings_file = Path(path) if path is not None else SETTINGS_FILE
 
     with open(settings_file, "r", encoding="utf-8") as f:
         settings = yaml.safe_load(f)
@@ -34,19 +31,15 @@ def load_settings():
     return settings
 
 
+# Load settings once for repo-wide path constants
 SETTINGS = load_settings()
 PATHS = SETTINGS["paths"]
-
 DATA_ROOT = Path(PATHS["data_root"])
 
 
 # ============================================================
 # REPO-BASED CONFIG FILES
 # ============================================================
-
-SETTINGS_FILE = (
-    LOCAL_SETTINGS_FILE if LOCAL_SETTINGS_FILE.exists() else TEMPLATE_SETTINGS_FILE
-)
 
 CHEM_MAPPING_FILE = CONFIG_DIR / "chemical_mapping.csv"
 ALERT_THRESHOLDS_FILE = CONFIG_DIR / "alert_thresholds.csv"
@@ -136,8 +129,9 @@ ERROR_LOG = LOG_DIR / "errors.log"
 # HELPERS
 # ============================================================
 
-def get_path(key: str) -> Path:
-    return DATA_ROOT / PATHS[key]
+def get_path(settings, key: str) -> Path:
+    data_root = Path(settings["paths"]["data_root"])
+    return data_root / settings["paths"][key]
 
 
 def ensure_directories():

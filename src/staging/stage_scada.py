@@ -41,7 +41,7 @@ def stage_scada(settings, logger, batch) -> pd.DataFrame:
                     batch_id=batch.batch_id,
                 )
             )
-        append_exceptions(settings, exceptions, logger)
+        append_exceptions(exceptions)
         return pd.DataFrame()
 
     df["well_id"] = df["well_id"].astype(str).str.strip()
@@ -65,7 +65,7 @@ def stage_scada(settings, logger, batch) -> pd.DataFrame:
     df["tag_value_text"] = df["tag_value"].astype(str)
 
     if exceptions:
-        append_exceptions(settings, exceptions, logger)
+        append_exceptions(exceptions)
 
     write_table(df, staged_dir, "stg_scada", settings)
     batch.set_row_count("stg_scada", len(df))

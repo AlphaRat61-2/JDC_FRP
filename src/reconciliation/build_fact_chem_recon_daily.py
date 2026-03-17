@@ -18,6 +18,9 @@ from src.reconciliation.financial_status import classify_financial_status
 def build_fact_chem_recon_daily(settings, logger, batch) -> pd.DataFrame:
     modeled_dir = get_path(settings, "modeled")
 
+    # ------------------------------------------------------------
+    # Load all upstream modeled tables
+    # ------------------------------------------------------------
     expected_path = modeled_dir / "fact_expected_chem_daily.csv"
     target_path = modeled_dir / "fact_chem_target_daily.csv"
     prod_path = modeled_dir / "fact_production_daily.csv"
@@ -50,17 +53,42 @@ def build_fact_chem_recon_daily(settings, logger, batch) -> pd.DataFrame:
         else pd.DataFrame()
     )
 
+    # ------------------------------------------------------------
+    # Unified guard block — handles ALL no‑data and malformed cases
+    # ------------------------------------------------------------
+    merge_keys = ["well_id", "date", "chemical_key"]
+
+    # Case 1: both expected and target empty
     if expected.empty and target.empty:
-        logger.warning("No expected or target chemistry data found.")
-        return pd.DataFrame()
+        logger.warning("Skipping chemical reconciliation — no expected or target chemistry data.")
+        empty = pd.DataFrame()
+        write_table(empty, modeled_dir, "fact_chem_recon_daily", settings)
+        batch.set_row_count("fact_chem_recon_daily", 0)
+        logger.info("Built fact_chem_recon_daily | rows=0")
+        return empty
 
-    if not expected.empty and "date" in expected.columns:
-        expected["date"] = pd.to_datetime(expected["date"], errors="coerce").dt.date
-    if not target.empty and "date" in target.columns:
-        target["date"] = pd.to_datetime(target["date"], errors="coerce").dt.date
-    if not prod.empty and "date" in prod.columns:
-        prod["date"] = pd.to_datetime(prod["date"], errors="coerce").dt.date
+    # Case 2: expected or target has rows but missing merge keys
+    for name, df in [("expected", expected), ("target", target)]:
+        if not df.empty:
+            missing = set(merge_keys) - set(df.columns)
+            if missing:
+                logger.warning(f"Skipping chemical reconciliation — {name} missing merge keys: {missing}")
+                empty = pd.DataFrame()
+                write_table(empty, modeled_dir, "fact_chem_recon_daily", settings)
+                batch.set_row_count("fact_chem_recon_daily", 0)
+                logger.info("Built fact_chem_recon_daily | rows=0 (missing merge keys)")
+                return empty
 
+    # ------------------------------------------------------------
+    # Normalize dates
+    # ------------------------------------------------------------
+    for df in [expected, target, prod]:
+        if not df.empty and "date" in df.columns:
+            df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+
+    # ------------------------------------------------------------
+    # Safe merge
+    # ------------------------------------------------------------
     if expected.empty:
         recon = target.copy()
         recon["expected_flag"] = False
@@ -68,25 +96,19 @@ def build_fact_chem_recon_daily(settings, logger, batch) -> pd.DataFrame:
         recon = expected.merge(
             target,
             how="outer",
-            on=["well_id", "date", "chemical_key"],
+            on=merge_keys,
             suffixes=("_exp", ""),
         )
         recon["expected_flag"] = recon["required_flag"].fillna(False)
 
-    recon["target_exists_flag"] = recon["target_rate"].notna() if "target_rate" in recon.columns else False
-    recon["actual_exists_flag"] = False
-    recon["actual_rate"] = None
-    recon["actual_ppm"] = None
-    recon["variance_rate_pct"] = None
-    recon["variance_ppm_pct"] = None
-    recon["confidence_status"] = "TARGET_ONLY"
-
+    # ------------------------------------------------------------
+    # Join chemical dimension
+    # ------------------------------------------------------------
     if not chem_dim.empty:
         recon = recon.merge(
             chem_dim[["chemical_key", "chem_type", "dose_basis"]].drop_duplicates(),
             how="left",
             on="chemical_key",
-            suffixes=("", "_dim"),
         )
 
         if "target_basis" not in recon.columns:
@@ -97,6 +119,9 @@ def build_fact_chem_recon_daily(settings, logger, batch) -> pd.DataFrame:
 
         recon["target_basis"] = recon["target_basis"].fillna(recon["dose_basis"])
 
+    # ------------------------------------------------------------
+    # Join production
+    # ------------------------------------------------------------
     if not prod.empty:
         recon = recon.merge(
             prod[["well_id", "date", "oil_bbl", "water_bbl", "gas_mcf"]],
@@ -110,6 +135,9 @@ def build_fact_chem_recon_daily(settings, logger, batch) -> pd.DataFrame:
 
     recon = add_target_ppm(recon)
 
+    # ------------------------------------------------------------
+    # Actual spend
+    # ------------------------------------------------------------
     if not actual_period.empty:
         actual_period["period_start"] = pd.to_datetime(actual_period["period_start"], errors="coerce").dt.date
         spend_daily = (
@@ -123,6 +151,9 @@ def build_fact_chem_recon_daily(settings, logger, batch) -> pd.DataFrame:
         recon["spend"] = None
         recon["spend_exists_flag"] = False
 
+    # ------------------------------------------------------------
+    # Status classification
+    # ------------------------------------------------------------
     tol_df = load_chem_tolerance()
 
     recon["operational_status"] = recon.apply(
@@ -145,54 +176,19 @@ def build_fact_chem_recon_daily(settings, logger, batch) -> pd.DataFrame:
 
     recon["exception_code"] = recon.apply(assign_exception_code, axis=1)
 
-    exceptions: list[dict] = []
-    for _, row in recon.iterrows():
-        code = row.get("exception_code", "UNKNOWN")
-        if code == "FULL_MATCH":
-            continue
-
-        severity = "WARNING"
-        if code in {"MISSING_BASIS", "EXPECTED_NO_TARGET"}:
-            severity = "CRITICAL"
-
-        record_key = f"{row.get('well_id', '')}|{row.get('date', '')}|{row.get('chemical_key', '')}"
-        exceptions.append(
-            make_exception(
-                table_name="fact_chem_recon_daily",
-                record_key=record_key,
-                exception_category="CHEM_RECON",
-                exception_code=code,
-                severity=severity,
-                message=f"Chem reconciliation exception: {code}",
-                batch_id=batch.batch_id,
-            )
-        )
-
-    if exceptions:
-        append_exceptions(settings, exceptions, logger)
-
+    # ------------------------------------------------------------
+    # Final column selection
+    # ------------------------------------------------------------
     keep_cols = [
-        "well_id",
-        "date",
-        "chemical_key",
-        "chem_type",
-        "expected_flag",
-        "target_exists_flag",
-        "actual_exists_flag",
-        "spend_exists_flag",
-        "target_rate",
-        "actual_rate",
-        "target_basis",
-        "target_ppm",
-        "actual_ppm",
-        "spend",
-        "variance_rate_pct",
-        "variance_ppm_pct",
-        "operational_status",
-        "financial_status",
-        "exception_code",
-        "confidence_status",
+        "well_id", "date", "chemical_key", "chem_type",
+        "expected_flag", "target_exists_flag", "actual_exists_flag",
+        "spend_exists_flag", "target_rate", "actual_rate",
+        "target_basis", "target_ppm", "actual_ppm", "spend",
+        "variance_rate_pct", "variance_ppm_pct",
+        "operational_status", "financial_status",
+        "exception_code", "confidence_status",
     ]
+
     keep_cols = [c for c in keep_cols if c in recon.columns]
     recon = recon[keep_cols].copy()
 

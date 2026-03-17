@@ -14,7 +14,8 @@ system:
 
 paths:
 
-  data_root: C:/Users/USERNAME/OneDrive/JDC_Data/JDC_FRP
+  data_root:  C:/Users/jcaron/OneDrive/JDC_Data/JDC_FRP
+
   raw: data/raw
   incoming: data/raw
   staged: data/staged
@@ -57,6 +58,7 @@ failure_model:
   random_seed: 42
 
 
+
 # =====================================================
 # FAILURE ALERT THRESHOLDS
 # =====================================================
@@ -68,6 +70,7 @@ alerts:
   failure_probability_30d: 0.50
 
   deterioration_score: 2.5
+
 
 
 # =====================================================
@@ -85,6 +88,7 @@ chemical_program:
   overtreat_threshold: 1.5
 
   undertreat_threshold: 0.6
+
 
 
 # =====================================================
@@ -114,6 +118,7 @@ digital_twin:
     - 1.1
 
 
+
 # =====================================================
 # OPTIMIZATION ENGINE WEIGHTS
 # =====================================================
@@ -125,6 +130,7 @@ optimization:
   risk_weight: 40
 
   cost_weight: 0.1
+
 
 
 # =====================================================
@@ -140,6 +146,7 @@ reinforcement_learning:
   exploration_rate: 0.10
 
 
+
 # =====================================================
 # RL FEEDBACK WINDOW
 # =====================================================
@@ -153,6 +160,7 @@ feedback:
   reward_risk_weight: 50
 
   reward_cost_weight: 0.1
+
 
 
 # =====================================================
@@ -176,3 +184,5 @@ report_tables:
   rl_recommendations: rpt_rl_recommendations.csv
 
   rl_feedback: rpt_rl_feedback_loop.csv
+
+ 

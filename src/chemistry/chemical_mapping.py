@@ -78,13 +78,10 @@ def map_chemical_names(
         record_key = f"{row.get('well_id', '')}|{row.get('date', '')}|{row.get(chem_name_col, '')}|{idx}"
         exceptions.append(
             make_exception(
-                table_name=table_name,
-                record_key=record_key,
-                exception_category="CHEM_MAP",
-                exception_code="UNMAPPED_CHEMICAL",
-                severity="WARNING",
+                module=table_name,
                 message=f"Chemical name not mapped: {row.get(chem_name_col, '')}",
-                batch_id=batch_id,
+                well_id=row.get("well_id"),
+                severity="WARNING",
             )
         )
 

@@ -27,5 +27,11 @@ def map_scada_tags(df: pd.DataFrame) -> pd.DataFrame:
         out["metric_name"] = None
         return out
 
+    df["lift_type"] = df["lift_type"].astype(str).str.strip()
+    tag_map["lift_type"] = tag_map["lift_type"].astype(str).str.strip()
+
+    df["tag_name"] = df["tag_name"].astype(str).str.strip()
+    tag_map["tag_name"] = tag_map["tag_name"].astype(str).str.strip()
+
     out = df.merge(tag_map, how="left", on=["tag_name", "lift_type"])
     return out

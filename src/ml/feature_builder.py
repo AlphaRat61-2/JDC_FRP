@@ -100,6 +100,19 @@ def build_ml_feature_well_daily(settings, logger, batch) -> pd.DataFrame:
         scada = pd.read_csv(scada_path, parse_dates=["date"], dtype={"well_id": str})
         scada["date"] = pd.to_datetime(scada["date"], errors="coerce")
 
+        # ---------------------------------------------------------
+        # ADD DETERIORATION FEATURES BEFORE AGGREGATION
+        # ---------------------------------------------------------
+        # Placeholder logic — replace with real model later
+        if "deterioration_score" not in scada.columns:
+            scada["deterioration_score"] = 0.0
+
+        if "pre_failure_flag" not in scada.columns:
+            scada["pre_failure_flag"] = 0
+
+        # ---------------------------------------------------------
+        # AGGREGATE SCADA DAILY
+        # ---------------------------------------------------------
         agg_dict = {
             "runtime_hr": "mean",
             "shutdown_count": "sum",
@@ -114,6 +127,9 @@ def build_ml_feature_well_daily(settings, logger, batch) -> pd.DataFrame:
         scada_daily = scada.groupby(["well_id", "date"], as_index=False).agg(agg_dict)
         feat = feat.merge(scada_daily, how="left", on=["well_id", "date"])
 
+        # ---------------------------------------------------------
+        # ROLLING FEATURES
+        # ---------------------------------------------------------
         feat["runtime_7d_avg"] = _safe_group_rolling_mean(
             feat.fillna({"runtime_hr": 0}), "well_id", "date", "runtime_hr", 7
         )
@@ -149,14 +165,6 @@ def build_ml_feature_well_daily(settings, logger, batch) -> pd.DataFrame:
             "shutdown_count",
             7,
         )
-    else:
-        feat["runtime_7d_avg"] = None
-        feat["fillage_7d_avg"] = None
-        feat["fillage_decline_7d"] = None
-        feat["trip_count_7d"] = 0
-        feat["shutdown_count_7d"] = 0
-        feat["deterioration_score"] = None
-        feat["pre_failure_flag"] = False
 
     if fail_path.exists():
         fail = pd.read_csv(fail_path, parse_dates=["fail_date"], dtype={"well_id": str})

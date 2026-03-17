@@ -31,7 +31,7 @@ def build_fact_chem_actual_period(settings, logger, batch) -> pd.DataFrame:
     )
 
     if exceptions:
-        append_exceptions(settings, exceptions, logger)
+        append_exceptions(exceptions)
 
     fact = pd.DataFrame(
         {
