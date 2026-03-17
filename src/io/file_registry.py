@@ -120,7 +120,7 @@ def detect_incoming_files(settings, logger, batch):
         "master_well.csv",
         "chemical_rates.csv",
         "chemical_cost.csv",
-        "failure_date.csv",
+        "failure_data.csv",
         "scada_data.csv",
         "workover_data.csv",
     ]

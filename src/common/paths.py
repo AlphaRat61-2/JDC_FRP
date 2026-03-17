@@ -1,11 +1,15 @@
 from pathlib import Path
 import yaml
 
+
 # ============================================================
 # PROJECT ROOT (LOCAL CODE + MODELED/OUTPUT/LOGS)
 # ============================================================
-# Explicitly set to pyprojects to avoid accidental OneDrive roots
 PROJECT_ROOT = Path("C:/Users/jcaron/pyprojects/JDC_FRP")
+
+# Backward compatibility for modules that still import ROOT
+ROOT = PROJECT_ROOT
+
 
 # ============================================================
 # CONFIG FILES
@@ -20,12 +24,9 @@ def project_root():
 
 
 def load_settings(path: str | Path | None = None):
-    # If no path is provided, use the single canonical settings.yaml
     settings_file = Path(path) if path is not None else SETTINGS_FILE
-
     with open(settings_file, "r", encoding="utf-8") as f:
         settings = yaml.safe_load(f)
-
     return settings
 
 
@@ -36,13 +37,11 @@ PATHS = SETTINGS["paths"]
 # ============================================================
 # RAW DATA ROOT (LIVES IN ONEDRIVE)
 # ============================================================
-# This is where your real business data lives.
-RAW_DATA_ROOT = Path("C:/Users/jcaron/OneDrive/JDC_Data/JDC_FRP/data/raw")
+RAW_DATA_ROOT = Path(r"C:/Users/jcaron/OneDrive - Ring Energy/JDC_Data/JDC_FRP/data/raw")
 
 # ============================================================
 # LOCAL DATA ROOT (MODELED, STAGED, REPORTS, LOGS)
 # ============================================================
-# All pipeline-generated files stay local to avoid OneDrive sync issues.
 LOCAL_DATA_ROOT = PROJECT_ROOT / "data"
 
 # ============================================================
@@ -121,15 +120,11 @@ ERROR_LOG = LOG_DIR / "errors.log"
 # ============================================================
 
 def get_path(settings, key: str) -> Path:
-    """
-    Returns a path based on the settings.yaml structure.
-    Raw paths are overridden to OneDrive.
-    Modeled/output paths are overridden to local project root.
-    """
-    if key == "raw":
+    if key in ("raw", "incoming"):
         return RAW_DATA_ROOT
     else:
         return LOCAL_DATA_ROOT / settings["paths"][key]
+
 
 
 def ensure_directories():
@@ -143,6 +138,5 @@ def ensure_directories():
         ML_DIR,
         LOG_DIR,
     ]
-
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)

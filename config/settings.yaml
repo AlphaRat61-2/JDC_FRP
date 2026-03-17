@@ -14,15 +14,18 @@ system:
 
 paths:
 
-  data_root:  C:/Users/jcaron/OneDrive/JDC_Data/JDC_FRP
 
-  raw: data/raw
-  incoming: data/raw
-  staged: data/staged
-  modeled: data/modeled
-  reports: data/reports
-  outputs_ml: outputs/ml
+
+  paths:
+  raw: raw
+  incoming: raw
+  modeled: modeled
+  staged: staged
+  reports: reports
+  outputs_ml: outputs_ml
   logs: logs
+  
+
 
 file_patterns:
   master_well: "master_well.csv"

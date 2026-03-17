@@ -24,7 +24,7 @@ def stage_failures(settings, logger, batch) -> pd.DataFrame:
     df = read_csv_file(path)
     df = add_source_metadata(df, path.name, batch.batch_id, "failures")
 
-    exceptions = validate_required_columns(df, FAILURE_SCHEMA, "raw_failure_date")
+    exceptions = validate_required_columns(df, FAILURE_SCHEMA, "raw_failure_data")
     if exceptions:
         logger.warning("Failure schema exceptions: %s", len(exceptions))
 

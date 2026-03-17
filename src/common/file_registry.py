@@ -2,14 +2,14 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 
-from src.common.paths import ROOT
+from src.common.paths import REPORT_DIR
 
 
-REGISTRY_FILE = ROOT / "data" / "reports" / "file_registry.csv"
+# Registry file now stored in the correct local reports directory
+REGISTRY_FILE = REPORT_DIR / "file_registry.csv"
 
 
 def _empty_registry():
-
     return pd.DataFrame(columns=[
         "file_name",
         "file_path",
@@ -22,10 +22,8 @@ def _empty_registry():
 
 
 def load_registry():
-
     if REGISTRY_FILE.exists():
         return pd.read_csv(REGISTRY_FILE)
-
     return _empty_registry()
 
 
@@ -48,7 +46,6 @@ def register_file(file_path, file_type, stage, row_count=None, status="created")
     registry = pd.concat([registry, pd.DataFrame([row])], ignore_index=True)
 
     REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
-
     registry.to_csv(REGISTRY_FILE, index=False)
 
     return registry
@@ -59,37 +56,29 @@ def update_status(file_path, status):
     registry = load_registry()
 
     mask = registry["file_path"] == str(file_path)
-
     registry.loc[mask, "status"] = status
 
     REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
-
     registry.to_csv(REGISTRY_FILE, index=False)
 
 
 def get_files_by_stage(stage):
-
     registry = load_registry()
-
     return registry[registry["stage"] == stage]
 
 
 def get_latest_file(file_type):
-
     registry = load_registry()
-
     df = registry[registry["file_type"] == file_type]
 
     if df.empty:
         return None
 
     df = df.sort_values("created_timestamp", ascending=False)
-
     return df.iloc[0]["file_path"]
 
 
 def summarize_registry():
-
     registry = load_registry()
 
     if registry.empty:
@@ -106,6 +95,5 @@ def summarize_registry():
 
 
 def clear_registry():
-
     if REGISTRY_FILE.exists():
         REGISTRY_FILE.unlink()
