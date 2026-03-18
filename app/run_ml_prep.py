@@ -20,6 +20,7 @@ from src.ml.train_test_splitter import build_training_dataset, split_train_test_
 from src.reporting.build_rpt_failure_risk import build_rpt_failure_risk
 from src.reporting.build_rpt_prediction_summary import build_rpt_prediction_summary
 from src.reporting.build_rpt_run_status import build_rpt_run_status
+from src.reporting.build_rpt_top_risk_wells import build_rpt_top_risk_wells
 
 
 def main() -> None:
@@ -35,6 +36,7 @@ def main() -> None:
         evaluate_model(settings, logger, batch, model, test_df)
         build_model_feature_importance(settings, logger, batch, model)
         score_failure_risk(settings, logger, batch)
+        build_rpt_top_risk_wells(settings, logger, batch)
         build_rpt_failure_risk(settings, logger, batch)
         build_rpt_prediction_summary(settings, logger, batch)
 

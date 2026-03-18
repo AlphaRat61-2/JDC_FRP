@@ -45,13 +45,59 @@ def score_failure_risk(settings, logger, batch) -> pd.DataFrame:
 
     if well_path.exists():
         well = pd.read_csv(well_path, dtype={"well_id": str})
+
+        for col, default in {
+            "well_name": "UNKNOWN",
+            "asset": "UNKNOWN",
+            "route": "UNKNOWN",
+            "lift_type": "UNKNOWN",
+            "equipment_profile_id": "EQP_UNKNOWN",
+        }.items():
+            if col not in well.columns:
+                well[col] = default
+
+        well = well[
+            ["well_id", "well_name", "asset", "route", "lift_type", "equipment_profile_id"]
+        ].drop_duplicates()
+
         score_df = score_df.merge(
-            well[["well_id", "well_name", "asset", "route", "lift_type"]],
+            well,
             how="left",
             on="well_id",
+            suffixes=("", "_well"),
         )
 
+        for col, default in {
+            "well_name": "UNKNOWN",
+            "asset": "UNKNOWN",
+            "route": "UNKNOWN",
+            "lift_type": "UNKNOWN",
+            "equipment_profile_id": "EQP_UNKNOWN",
+        }.items():
+            well_col = f"{col}_well"
+            if col not in score_df.columns:
+                score_df[col] = default
+            if well_col in score_df.columns:
+                score_df[col] = score_df[col].fillna(score_df[well_col])
+                score_df = score_df.drop(columns=[well_col])
+
+    for col, default in {
+        "well_name": "UNKNOWN",
+        "asset": "UNKNOWN",
+        "route": "UNKNOWN",
+        "lift_type": "UNKNOWN",
+        "equipment_profile_id": "EQP_UNKNOWN",
+    }.items():
+        if col not in score_df.columns:
+            score_df[col] = default
+        score_df[col] = score_df[col].fillna(default)
+
     score_df["date"] = pd.to_datetime(score_df["date"], errors="coerce").dt.date
+    score_df["high_risk_flag"] = score_df["risk_bucket"].isin(["HIGH", "CRITICAL"]).astype(int)
+    score_df["risk_rank_daily"] = (
+        score_df.groupby("date")["failure_risk_30d"]
+        .rank(method="dense", ascending=False)
+    )
 
     keep_cols = [
         "well_id",
@@ -59,9 +105,12 @@ def score_failure_risk(settings, logger, batch) -> pd.DataFrame:
         "asset",
         "route",
         "lift_type",
+        "equipment_profile_id",
         "date",
         "failure_risk_30d",
         "risk_bucket",
+        "high_risk_flag",
+        "risk_rank_daily",
         "days_since_last_failure",
         "failures_last_90d",
         "chem_exception_7d",

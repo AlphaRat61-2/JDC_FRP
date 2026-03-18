@@ -9,7 +9,7 @@ from src.io.exception_store import append_exceptions
 from src.io.writers import write_table
 
 
-def build_fact_chem_actual_period(settings, logger, batch) -> pd.DataFrame:
+def build_fact_chem_actual_daily(settings, logger, batch) -> pd.DataFrame:
     staged_dir = get_path(settings, "staged")
     modeled_dir = get_path(settings, "modeled")
 
@@ -52,7 +52,7 @@ def build_fact_chem_actual_period(settings, logger, batch) -> pd.DataFrame:
         }
     )
 
-    write_table(fact, modeled_dir, "fact_chem_actual_period", settings)
-    batch.set_row_count("fact_chem_actual_period", len(fact))
-    logger.info("Built fact_chem_actual_period | rows=%s", len(fact))
+    write_table(fact, modeled_dir, "fact_chem_actual_daily", settings)
+    batch.set_row_count("fact_chem_actual_daily", len(fact))
+    logger.info("Built fact_chem_actual_daily | rows=%s", len(fact))
     return fact

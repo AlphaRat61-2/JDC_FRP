@@ -31,7 +31,7 @@ from src.workovers.build_fact_workover_event import build_fact_workover_event
 
 from src.chemistry.build_expected_chem_daily import build_expected_chem_daily
 from src.chemistry.target_resolution import build_fact_chem_target_daily
-from src.chemistry.actual_builder import build_fact_chem_actual_period
+from src.chemistry.actual_builder import build_fact_chem_actual_daily
 from src.reconciliation.build_fact_chem_recon_daily import build_fact_chem_recon_daily
 
 from src.scada.build_fact_scada_daily import build_fact_scada_daily
@@ -48,6 +48,7 @@ from src.reporting.build_rpt_month_status import build_rpt_month_status
 from src.reporting.build_rpt_ml_readiness import build_rpt_ml_readiness
 from src.reporting.build_rpt_run_status import build_rpt_run_status
 from src.reporting.build_rpt_workover import build_rpt_workover
+from src.reporting.build_rpt_top_risk_wells import build_rpt_top_risk_wells
 
 
 def main() -> None:
@@ -76,7 +77,7 @@ def main() -> None:
 
         build_expected_chem_daily(settings, logger, batch)
         build_fact_chem_target_daily(settings, logger, batch)
-        build_fact_chem_actual_period(settings, logger, batch)
+        build_fact_chem_actual_daily(settings, logger, batch)
         build_fact_chem_recon_daily(settings, logger, batch)
 
         build_fact_scada_daily(settings, logger, batch)

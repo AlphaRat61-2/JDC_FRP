@@ -16,11 +16,17 @@ def build_dim_well(settings, logger, batch) -> pd.DataFrame:
         return pd.DataFrame()
 
     df = pd.read_csv(path, dtype={"well_id": str})
+
     dim = df[["well_id", "well_name", "asset", "route"]].drop_duplicates().copy()
 
-    dim["lift_type"] = None
-    dim["well_status"] = None
-    dim["equipment_profile_id"] = None
+    dim["well_id"] = dim["well_id"].astype(str)
+    dim["well_name"] = dim["well_name"].fillna("UNKNOWN")
+    dim["asset"] = dim["asset"].fillna("UNKNOWN")
+    dim["route"] = dim["route"].fillna("UNKNOWN")
+
+    dim["lift_type"] = "UNKNOWN"
+    dim["well_status"] = "UNKNOWN"
+    dim["equipment_profile_id"] = "EQP_UNKNOWN"
     dim["is_active_flag"] = True
 
     write_table(dim, modeled_dir, "dim_well", settings)

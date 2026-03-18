@@ -46,14 +46,18 @@ def build_fact_chem_target_daily(settings, logger, batch) -> pd.DataFrame:
             "target_basis": mapped["dose_basis"],
             "target_source": "chemical_rates",
             "target_source_priority": 3,
-            "effective_rule_used": "RATES_FILE",
+            "effective_rule_used": "DAILY_RATES_FILE",
+            "target_grain": "DAILY",
             "target_confidence": CONFIDENCE_HIGH,
             "target_status": "ACTIVE",
         }
     )
 
     if "default_basis" in mapped.columns:
-        fact["target_basis"] = fact["target_basis"].fillna(mapped["default_basis"])
+        fact["target_basis"] = fact["target_basis"].where(
+            fact["target_basis"].notna(),
+            mapped["default_basis"],
+        )
 
     write_table(fact, modeled_dir, "fact_chem_target_daily", settings)
     batch.set_row_count("fact_chem_target_daily", len(fact))

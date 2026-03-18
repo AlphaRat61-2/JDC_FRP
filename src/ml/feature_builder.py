@@ -60,6 +60,8 @@ def build_ml_feature_well_daily(settings, logger, batch) -> pd.DataFrame:
     feat = prod[
         ["well_id", "date", "oil_bbl", "gas_mcf", "water_bbl", "boe", "total_fluid_bbl"]
     ].copy()
+    
+    feat["well_id"] = feat["well_id"].astype(str)
 
     denom = (feat["oil_bbl"].fillna(0) + feat["water_bbl"].fillna(0)).replace(0, pd.NA)
     feat["water_cut"] = feat["water_bbl"].fillna(0) / denom
@@ -223,14 +225,39 @@ def build_ml_feature_well_daily(settings, logger, batch) -> pd.DataFrame:
 
     if well_path.exists():
         well = pd.read_csv(well_path, dtype={"well_id": str})
+
+        for col, default in {
+            "asset": "UNKNOWN",
+            "route": "UNKNOWN",
+            "lift_type": "UNKNOWN",
+            "equipment_profile_id": "EQP_UNKNOWN",
+        }.items():
+            if col not in well.columns:
+                well[col] = default
+
         feat = feat.merge(
             well[["well_id", "asset", "route", "lift_type", "equipment_profile_id"]],
             how="left",
             on="well_id",
         )
+    else:
+        feat["asset"] = "UNKNOWN"
+        feat["route"] = "UNKNOWN"
+        feat["lift_type"] = "UNKNOWN"
+        feat["equipment_profile_id"] = "EQP_UNKNOWN"
+
+    feat["asset"] = feat["asset"].fillna("UNKNOWN")
+    feat["route"] = feat["route"].fillna("UNKNOWN")
+    feat["lift_type"] = feat["lift_type"].fillna("UNKNOWN")
+    feat["equipment_profile_id"] = feat["equipment_profile_id"].fillna("EQP_UNKNOWN")
 
     feat["date"] = pd.to_datetime(feat["date"], errors="coerce").dt.date
 
+    feat["lift_type_known_flag"] = (feat["lift_type"] != "UNKNOWN").astype(int)
+    feat["equipment_profile_known_flag"] = (
+        feat["equipment_profile_id"] != "EQP_UNKNOWN"
+    ).astype(int)
+    
     write_table(feat, ml_dir, "ml_feature_well_daily", settings)
     batch.set_row_count("ml_feature_well_daily", len(feat))
     logger.info("Built ml_feature_well_daily | rows=%s", len(feat))

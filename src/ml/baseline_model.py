@@ -7,7 +7,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.common.paths import project_root
 from src.ml.model_features import CATEGORICAL_COLUMNS, FEATURE_COLUMNS, TARGET_COLUMN
@@ -43,6 +43,7 @@ def train_baseline_model(settings, logger, batch, train_df: pd.DataFrame):
     numeric_transformer = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="constant", fill_value=0)),
+            ("scaler", StandardScaler()),
         ]
     )
 
@@ -63,7 +64,7 @@ def train_baseline_model(settings, logger, batch, train_df: pd.DataFrame):
     model = Pipeline(
         steps=[
             ("preprocessor", preprocessor),
-            ("classifier", LogisticRegression(max_iter=1000, class_weight="balanced")),
+            ("classifier", LogisticRegression(max_iter=3000, class_weight="balanced")),
         ]
     )
 

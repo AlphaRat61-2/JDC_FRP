@@ -109,7 +109,11 @@ def build_fact_month_status(settings, logger, batch) -> pd.DataFrame:
     lock_df = _load_month_lock()
     if not lock_df.empty:
         summary = summary.merge(lock_df, how="left", on="month_key")
-        summary["lock_flag"] = summary["lock_flag"].fillna(False)
+        summary["lock_flag"] = summary["lock_flag"].where(
+            summary["lock_flag"].notna(),
+            False,
+        )         
+        
     else:
         summary["lock_flag"] = False
         summary["lock_reason"] = None

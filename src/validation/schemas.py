@@ -1,5 +1,5 @@
 MASTER_WELL_SCHEMA = {
-    "required": ["well_id", "asset", "route", "well_name"],
+    "required": ["well_id", "well_name", "asset", "route"],
     "optional": [],
 }
 
