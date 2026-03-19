@@ -75,8 +75,8 @@ def main() -> None:
         build_fact_failure_event(settings, logger, batch)
         build_fact_workover_event(settings, logger, batch)
 
-        build_expected_chem_daily(settings, logger, batch)
         build_fact_chem_target_daily(settings, logger, batch)
+        build_expected_chem_daily(settings, logger, batch)
         build_fact_chem_actual_daily(settings, logger, batch)
         build_fact_chem_recon_daily(settings, logger, batch)
 

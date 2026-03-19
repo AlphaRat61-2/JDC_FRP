@@ -76,26 +76,66 @@ def build_ml_feature_well_daily(settings, logger, batch) -> pd.DataFrame:
     if chem_path.exists():
         chem = pd.read_csv(chem_path, parse_dates=["date"], dtype={"well_id": str})
         chem["date"] = pd.to_datetime(chem["date"], errors="coerce")
+
         chem["chem_exception_flag"] = chem["exception_code"].fillna("UNKNOWN") != "FULL_MATCH"
         chem["spend_amt"] = pd.to_numeric(chem.get("spend"), errors="coerce").fillna(0)
 
+        chem["chem_target_missing_flag"] = (~chem.get("target_exists_flag", False).fillna(False)).astype(int)
+        chem["chem_actual_missing_flag"] = (~chem.get("actual_exists_flag", False).fillna(False)).astype(int)
+
+        chem["chem_noncompliant_flag"] = chem.get("operational_status", "").fillna("").isin(
+            ["UNDER_TREATED", "OVER_TREATED", "MISSING_TARGET", "MISSING_ACTUAL"]
+        ).astype(int)
+
+        chem["chem_miss_flag"] = (
+            chem["chem_target_missing_flag"] | chem["chem_actual_missing_flag"]
+        ).astype(int)
+
         chem_daily = chem.groupby(["well_id", "date"], as_index=False).agg(
             chem_exception_days=("chem_exception_flag", "sum"),
+            chem_noncompliant_days=("chem_noncompliant_flag", "sum"),
+            chem_miss_days=("chem_miss_flag", "sum"),
+            chem_target_missing_days=("chem_target_missing_flag", "sum"),
+            chem_actual_missing_days=("chem_actual_missing_flag", "sum"),
             spend_daily=("spend_amt", "sum"),
         )
 
         feat = feat.merge(chem_daily, how="left", on=["well_id", "date"])
-        feat["chem_exception_days"] = feat["chem_exception_days"].fillna(0)
-        feat["spend_daily"] = feat["spend_daily"].fillna(0)
+
+        for col in [
+            "chem_exception_days",
+            "chem_noncompliant_days",
+            "chem_miss_days",
+            "chem_target_missing_days",
+            "chem_actual_missing_days",
+            "spend_daily",
+        ]:
+            feat[col] = feat[col].fillna(0)
 
         feat["chem_exception_7d"] = _safe_group_rolling_sum(
             feat, "well_id", "date", "chem_exception_days", 7
+        )
+        feat["chem_noncompliant_7d"] = _safe_group_rolling_sum(
+            feat, "well_id", "date", "chem_noncompliant_days", 7
+        )
+        feat["chem_miss_7d"] = _safe_group_rolling_sum(
+            feat, "well_id", "date", "chem_miss_days", 7
+        )
+        feat["chem_target_missing_7d"] = _safe_group_rolling_sum(
+            feat, "well_id", "date", "chem_target_missing_days", 7
+        )
+        feat["chem_actual_missing_7d"] = _safe_group_rolling_sum(
+            feat, "well_id", "date", "chem_actual_missing_days", 7
         )
         feat["spend_30d"] = _safe_group_rolling_sum(
             feat, "well_id", "date", "spend_daily", 30
         )
     else:
         feat["chem_exception_7d"] = 0
+        feat["chem_noncompliant_7d"] = 0
+        feat["chem_miss_7d"] = 0
+        feat["chem_target_missing_7d"] = 0
+        feat["chem_actual_missing_7d"] = 0
         feat["spend_30d"] = 0
 
     if scada_path.exists():
