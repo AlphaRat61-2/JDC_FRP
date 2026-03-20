@@ -31,7 +31,6 @@ def load_chem_name_map() -> pd.DataFrame:
         ]
     )
 
-
 def load_basis_rules() -> pd.DataFrame:
     path = project_root() / "config" / "chem_basis_rules.csv"
     if path.exists():

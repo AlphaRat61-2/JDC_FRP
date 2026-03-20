@@ -1,23 +1,13 @@
 import pandas as pd
 
-scored = pd.read_csv("outputs/ml/ml_failure_risk_scored.csv", dtype={"well_id": str})
-labels = pd.read_csv("outputs/ml/ml_label_failure.csv", dtype={"well_id": str})
+prod = pd.read_csv("data/modeled/fact_production_daily.csv", dtype={"well_id": str})
+fail = pd.read_csv("data/modeled/fact_failure_event.csv", dtype={"well_id": str})
 
-scored["date"] = pd.to_datetime(scored["date"], errors="coerce").dt.date
-labels["date"] = pd.to_datetime(labels["date"], errors="coerce").dt.date
+prod_ids = set(prod["well_id"].dropna().astype(str).str.strip())
+fail_ids = set(fail["well_id"].dropna().astype(str).str.strip())
 
-df = scored.merge(
-    labels[["well_id", "date", "failure_within_30d"]],
-    how="left",
-    on=["well_id", "date"],
-)
-
-print(df.groupby("risk_bucket")["failure_within_30d"].mean())
-print(df.groupby("risk_bucket")["failure_risk_30d"].mean())
-
-p95 = df["failure_risk_30d"].quantile(0.95)
-top = df[df["failure_risk_30d"] >= p95]
-
-print("95th percentile cutoff:", p95)
-print("Top 5% failure rate:", top["failure_within_30d"].mean())
-print("Overall failure rate:", df["failure_within_30d"].mean())
+print("prod wells:", len(prod_ids))
+print("fail wells:", len(fail_ids))
+print("matching wells:", len(prod_ids & fail_ids))
+print("fail-only sample:", list(sorted(fail_ids - prod_ids))[:20])
+print("prod-only sample:", list(sorted(prod_ids - fail_ids))[:20])

@@ -24,7 +24,6 @@ def load_exceptions():
         return pd.read_csv(EXCEPTION_FILE)
     return _empty_exceptions()
 
-
 def append_exceptions(exceptions):
     """
     Append a list of exception dictionaries to the exception log.

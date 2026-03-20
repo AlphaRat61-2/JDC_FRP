@@ -12,12 +12,14 @@ from src.validation.field_checks import parse_date_column, validate_numeric_nonn
 from src.validation.duplicate_checks import check_duplicates
 
 
+
+
 def rename_production_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     rename_map = {
-        "bopm": "oil_bbl",
-        "mcfm": "gas_mcf",
-        "bwpm": "water_bbl",
+        "bopd": "oil_bbl",
+        "mcfd": "gas_mcf",
+        "bwpd": "water_bbl",
     }
     return df.rename(columns=rename_map)
 
@@ -34,7 +36,7 @@ def stage_production(settings, logger, batch) -> pd.DataFrame:
     path: Path = files[-1]
     df = read_csv_file(path)
     df = add_source_metadata(df, path.name, batch.batch_id, "production")
-
+ 
     exceptions = validate_required_columns(df, PRODUCTION_SCHEMA, "raw_production_daily")
     if exceptions:
         logger.warning("Production schema exceptions: %s", len(exceptions))
