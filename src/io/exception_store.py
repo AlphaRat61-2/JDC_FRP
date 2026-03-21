@@ -21,7 +21,7 @@ def _empty_exceptions():
 
 def load_exceptions():
     if EXCEPTION_FILE.exists():
-        return pd.read_csv(EXCEPTION_FILE)
+        return pd.read_csv(EXCEPTION_FILE,low_memory=False)
     return _empty_exceptions()
 
 def append_exceptions(exceptions):

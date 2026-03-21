@@ -8,11 +8,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 PIPELINE_SCRIPTS = [
-    "app/test_environment.py",
-    "app/run_pipeline.py",
-    "app/run_ml_prep.py",
-    "app/run_rl_control.py",
-    "app/run_rl_feedback.py",
+    ("app/test_environment.py", "Environment Test", False),
+    ("app/run_pipeline.py", "Pipeline", False),
+    ("app/run_ml_prep.py", "ML Prep", False),
+    ("app/run_rl_control.py", "RL Control", True),
+    ("app/run_rl_feedback.py", "RL Feedback", True),
 ]
 
 
@@ -37,7 +37,7 @@ def print_progress(results):
     print("-" * 60 + "\n")
 
 
-def run_script(script_path):
+def run_script(script_path: str):
     start = time.time()
 
     result = subprocess.run(
@@ -54,18 +54,36 @@ def main():
 
     results = []
 
-    for script in PIPELINE_SCRIPTS:
+    for script, step_name, optional in PIPELINE_SCRIPTS:
+        script_full_path = ROOT / script
+
         print_progress(results + [(script, "RUNNING", None)])
+
+        if not script_full_path.exists():
+            if optional:
+                results.append((script, "SKIPPED", None))
+                print(f"[SKIP] {step_name}: file not found -> {script}\n")
+                continue
+            else:
+                results.append((script, "FAILED", None))
+                print_progress(results)
+                print(f"Run stopped because required script was not found: {script}\n")
+                sys.exit(1)
 
         returncode, elapsed = run_script(script)
 
         if returncode == 0:
             results.append((script, "DONE", elapsed))
         else:
-            results.append((script, "FAILED", elapsed))
-            print_progress(results)
-            print(f"Run stopped because {script} failed.\n")
-            sys.exit(returncode)
+            if optional:
+                results.append((script, "FAILED", elapsed))
+                print(f"[WARN] Optional step failed: {script}\n")
+                continue
+            else:
+                results.append((script, "FAILED", elapsed))
+                print_progress(results)
+                print(f"Run stopped because {script} failed.\n")
+                sys.exit(returncode)
 
     print_progress(results)
 

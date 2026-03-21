@@ -89,8 +89,20 @@ def build_fact_chem_target_daily(settings, logger, batch) -> pd.DataFrame:
 
     missing_key = fact["chemical_key"].isna().sum()
     if missing_key > 0:
-        logger.warning("Dropping chem target rows with missing chemical_key | rows=%s", missing_key)
+        bad = fact[fact["chemical_key"].isna()]
+        bad.to_csv("debug_missing_chem_keys.csv", index=False)
 
+        logger.warning(
+            "Dropping chem target rows with missing chemical_key | rows=%s",
+            missing_key,
+        )
+
+    bad = fact[fact["chemical_key"].isna()]
+    bad.to_csv("debug_missing_chem_keys.csv", index=False)
+
+
+
+    # DROP happens here
     fact = fact[fact["chemical_key"].notna()].copy()
     fact = fact.drop_duplicates(subset=["well_id", "date", "chemical_key"], keep="last")
 
