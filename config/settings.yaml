@@ -13,8 +13,8 @@ system:
 # =====================================================
 
 paths:
-
-
+  
+  #base_dir:  C:\Users\hwda1\OneDrive\JDC_Data
 
   paths:
   raw: raw
