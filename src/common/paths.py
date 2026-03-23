@@ -5,7 +5,8 @@ import yaml
 # ============================================================
 # PROJECT ROOT (LOCAL CODE + MODELED/OUTPUT/LOGS)
 # ============================================================
-PROJECT_ROOT = Path("C:/Users/jcaron/pyprojects/JDC_FRP")
+#PROJECT_ROOT = Path("C:/Users/jcaron/pyprojects/JDC_FRP")
+PROJECT_ROOT = Path("C:/Users/hwda1/JDC_FRP")
 
 # Backward compatibility for modules that still import ROOT
 ROOT = PROJECT_ROOT
@@ -37,7 +38,9 @@ PATHS = SETTINGS["paths"]
 # ============================================================
 # RAW DATA ROOT (LIVES IN ONEDRIVE)
 # ============================================================
-RAW_DATA_ROOT = Path(r"C:/Users/jcaron/OneDrive - Ring Energy/JDC_Data/JDC_FRP/data/raw")
+RAW_DATA_ROOT = Path(r"C:/Users/hwda1/OneDrive/JDC_Data/JDC_FRP/data/raw")
+
+
 
 # ============================================================
 # LOCAL DATA ROOT (MODELED, STAGED, REPORTS, LOGS)

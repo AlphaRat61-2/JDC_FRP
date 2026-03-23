@@ -1,8 +1,6 @@
 pandas
-logging
-re
 joblib
 scikit-learn
 numpy
 scipy
-
+pyyaml
