@@ -10,9 +10,6 @@ from src.io.exception_store import append_exceptions
 from src.io.writers import write_table
 
 
-# -----------------------------
-# Helpers
-# -----------------------------
 def _normalize_chem_text(value) -> str | None:
     if pd.isna(value):
         return None
@@ -29,9 +26,6 @@ def _normalize_type_text(value) -> str | None:
     return str(value).strip().upper()
 
 
-# -----------------------------
-# Main Builder
-# -----------------------------
 def build_fact_chem_actual_daily(settings, logger, batch) -> pd.DataFrame:
     staged_dir = get_path(settings, "staged")
     modeled_dir = get_path(settings, "modeled")
@@ -45,27 +39,16 @@ def build_fact_chem_actual_daily(settings, logger, batch) -> pd.DataFrame:
 
     df = pd.read_csv(cost_path, dtype={"well_id": str})
 
-    # -----------------------------
-    # Basic cleanup
-    # -----------------------------
     df["well_id"] = df["well_id"].astype(str).str.strip()
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
-
     df["qty"] = pd.to_numeric(df.get("qty"), errors="coerce")
     df["actual_cost"] = pd.to_numeric(df.get("actual_cost"), errors="coerce")
-
     df["line_category"] = df["line_category"].astype("string").str.upper()
 
-    # -----------------------------
-    # SPLIT DATA (THIS IS THE FIX)
-    # -----------------------------
     chem_df = df[df["line_category"] == "CHEMICAL"].copy()
     equip_df = df[df["line_category"] == "EQUIPMENT"].copy()
     disc_df = df[df["line_category"] == "DISCOUNT"].copy()
 
-    # -----------------------------
-    # CHEMICALS → mapping required
-    # -----------------------------
     if not chem_df.empty:
         mapped, exceptions = map_chemical_names(
             chem_df,
@@ -84,13 +67,9 @@ def build_fact_chem_actual_daily(settings, logger, batch) -> pd.DataFrame:
 
         mapped["chem_name_norm"] = mapped["chem_name"].apply(_normalize_chem_text)
         mapped["chem_type_norm"] = mapped["chem_type"].apply(_normalize_type_text)
-
     else:
         mapped = pd.DataFrame(columns=["chemical_key"])
 
-    # -----------------------------
-    # OPTIONAL: fallback mapping
-    # -----------------------------
     if not mapped.empty and chem_dim_path.exists():
         chem_dim = pd.read_csv(chem_dim_path)
 
@@ -104,9 +83,6 @@ def build_fact_chem_actual_daily(settings, logger, batch) -> pd.DataFrame:
             suffixes=("", "_dim"),
         )
 
-        # -----------------------------
-        # FIX: unify chemical_key
-        # -----------------------------
         if "chemical_key_dim" in merged.columns:
             if "chemical_key" in merged.columns:
                 merged["chemical_key"] = merged["chemical_key"].where(
@@ -120,20 +96,17 @@ def build_fact_chem_actual_daily(settings, logger, batch) -> pd.DataFrame:
 
         mapped = merged
 
-    # -----------------------------
-    # BUILD CHEMICAL FACT
-    # -----------------------------
     chem_fact = pd.DataFrame()
 
     if not mapped.empty:
         chem_fact = pd.DataFrame(
             {
-                "well_id": mapped["well_id"],
+                "well_id": mapped["well_id"].astype(str).str.strip(),
                 "chemical_key": mapped["chemical_key"],
-                "period_start": mapped["date"].dt.date,
-                "period_end": mapped["date"].dt.date,
-                "actual_total_volume": mapped["qty"],
-                "actual_total_cost": mapped["actual_cost"],
+                "period_start": pd.to_datetime(mapped["date"], errors="coerce").dt.date,
+                "period_end": pd.to_datetime(mapped["date"], errors="coerce").dt.date,
+                "actual_total_volume": pd.to_numeric(mapped["qty"], errors="coerce"),
+                "actual_total_cost": pd.to_numeric(mapped["actual_cost"], errors="coerce"),
                 "actual_unit": mapped.get("uom"),
                 "source": "chemical_cost",
                 "allocation_method": "NONE",
@@ -147,72 +120,80 @@ def build_fact_chem_actual_daily(settings, logger, batch) -> pd.DataFrame:
             }
         )
 
-    # -----------------------------
-    # EQUIPMENT FACT (NO MAPPING)
-    # -----------------------------
     equip_fact = pd.DataFrame()
 
     if not equip_df.empty:
         equip_fact = pd.DataFrame(
             {
-                "well_id": equip_df["well_id"],
-                "chemical_key": None,
-                "period_start": equip_df["date"].dt.date,
-                "period_end": equip_df["date"].dt.date,
-                "actual_total_volume": None,
-                "actual_total_cost": equip_df["actual_cost"],
+                "well_id": equip_df["well_id"].astype(str).str.strip(),
+                "chemical_key": pd.NA,
+                "period_start": pd.to_datetime(equip_df["date"], errors="coerce").dt.date,
+                "period_end": pd.to_datetime(equip_df["date"], errors="coerce").dt.date,
+                "actual_total_volume": pd.NA,
+                "actual_total_cost": pd.to_numeric(equip_df["actual_cost"], errors="coerce"),
                 "actual_unit": equip_df.get("uom"),
                 "source": "chemical_cost",
                 "allocation_method": "NONE",
                 "actual_confidence": CONFIDENCE_UNKNOWN,
                 "actual_method": "EQUIPMENT",
-                "equipment": equip_df["equipment"],
+                "equipment": equip_df.get("equipment"),
                 "vendor": equip_df.get("vendor"),
                 "line_category": "EQUIPMENT",
-                "chem_name_raw": None,
-                "chem_type_raw": None,
+                "chem_name_raw": pd.NA,
+                "chem_type_raw": pd.NA,
             }
         )
 
-    # -----------------------------
-    # DISCOUNT FACT
-    # -----------------------------
     disc_fact = pd.DataFrame()
 
     if not disc_df.empty:
         disc_fact = pd.DataFrame(
             {
-                "well_id": disc_df["well_id"],
-                "chemical_key": None,
-                "period_start": disc_df["date"].dt.date,
-                "period_end": disc_df["date"].dt.date,
-                "actual_total_volume": None,
-                "actual_total_cost": disc_df["actual_cost"],
-                "actual_unit": None,
+                "well_id": disc_df["well_id"].astype(str).str.strip(),
+                "chemical_key": pd.NA,
+                "period_start": pd.to_datetime(disc_df["date"], errors="coerce").dt.date,
+                "period_end": pd.to_datetime(disc_df["date"], errors="coerce").dt.date,
+                "actual_total_volume": pd.NA,
+                "actual_total_cost": pd.to_numeric(disc_df["actual_cost"], errors="coerce"),
+                "actual_unit": pd.NA,
                 "source": "chemical_cost",
                 "allocation_method": "NONE",
                 "actual_confidence": CONFIDENCE_UNKNOWN,
                 "actual_method": "DISCOUNT",
-                "equipment": None,
+                "equipment": pd.NA,
                 "vendor": disc_df.get("vendor"),
                 "line_category": "DISCOUNT",
-                "chem_name_raw": None,
-                "chem_type_raw": None,
+                "chem_name_raw": pd.NA,
+                "chem_type_raw": pd.NA,
             }
         )
 
-    # -----------------------------
-    # COMBINE ALL
-    # -----------------------------
-    frames = [chem_fact, equip_fact, disc_fact]
+    clean_frames = []
+    for f in [chem_fact, equip_fact, disc_fact]:
+        if f is None or f.empty:
+            continue
 
-    frames = [f for f in frames if f is not None and not f.empty and not f.isna().all().all()]
+        f = f.copy()
+        f = f.loc[:, ~f.isna().all()]
+        if f.empty:
+            continue
 
-    fact = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+        if "chemical_key" not in f.columns:
+            f["chemical_key"] = pd.NA
 
-    # -----------------------------
-    # CLEANUP
-    # -----------------------------
+        clean_frames.append(f)
+
+    fact = pd.concat(clean_frames, ignore_index=True, sort=False) if clean_frames else pd.DataFrame()
+
+    if fact.empty:
+        write_table(fact, modeled_dir, "fact_chem_actual_daily", settings)
+        batch.set_row_count("fact_chem_actual_daily", 0)
+        logger.info("Built fact_chem_actual_daily | rows=0")
+        return fact
+
+    if "chemical_key" not in fact.columns:
+        fact["chemical_key"] = pd.NA
+
     fact = fact[fact["period_start"].notna()].copy()
 
     fact = fact.drop_duplicates(
@@ -220,9 +201,6 @@ def build_fact_chem_actual_daily(settings, logger, batch) -> pd.DataFrame:
         keep="last",
     )
 
-    # -----------------------------
-    # WRITE OUTPUT
-    # -----------------------------
     write_table(fact, modeled_dir, "fact_chem_actual_daily", settings)
     batch.set_row_count("fact_chem_actual_daily", len(fact))
     logger.info("Built fact_chem_actual_daily | rows=%s", len(fact))
